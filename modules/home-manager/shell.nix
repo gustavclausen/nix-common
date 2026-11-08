@@ -73,33 +73,6 @@
         export PATH=$HOME/.local/bin:$PATH
         export PATH=$HOME/.local/scripts:$PATH
 
-        export CDPATH=".:$HOME/.local/share/src"
-        export GPG_TTY=$(tty)
-
-        source ${pkgs.git}/share/git/contrib/completion/git-prompt.sh
-        GIT_PS1_SHOWDIRTYSTATE=1
-
-        __prompt() {
-          local status=$?
-          local reset='\[\e[0m\]'
-          local color_status='\[\e[33m\]'
-          [[ $status -ne 0 ]] && color_status='\[\e[31m\]'
-
-          PS1="\[\e[35m\]\u@''${HOSTNAME%%.*} ❯$reset "
-
-          if command -v kubectl >/dev/null 2>&1; then
-            local ctx
-            ctx=$(kubectl config current-context 2>/dev/null)
-            [[ -n $ctx ]] && PS1+="\[\e[36m\]$ctx ❯$reset "
-          fi
-
-          PS1+="\[\e[33m\]\W$reset"
-          [[ $(jobs -p | wc -l) -gt 0 ]] && PS1+=" \[\e[34m\]*$reset"
-          PS1+="$(__git_ps1 ' \[\e[32m\](%s)'"$reset")"
-          PS1+=" $color_status|$reset "
-        }
-        PROMPT_COMMAND="__prompt''${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
-
         for file in $HOME/.secrets/*.env; do
           source "$file"
         done
