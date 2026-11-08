@@ -45,8 +45,7 @@
         default = import ./modules/home-manager { inherit minimal-tmux; };
       };
 
-      # Sample standalone Home Manager configuration: the evaluation seam
-      # used by CI and by `checks`.
+      # Sample standalone Home Manager configuration, used by CI and `checks`.
       mkSample =
         system:
         home-manager.lib.homeManagerConfiguration {
