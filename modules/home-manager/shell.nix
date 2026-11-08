@@ -38,133 +38,84 @@
   };
 
   programs = {
-    zsh = {
+    bash = {
       enable = true;
-      autocd = false;
-      cdpath = [ "${config.home.homeDirectory}/.local/share/src" ];
-      dotDir = "${config.home.homeDirectory}/.config/zsh";
-      plugins = [
-        {
-          name = "zsh-autosuggestions";
-          src = pkgs.fetchFromGitHub {
-            owner = "zsh-users";
-            repo = "zsh-autosuggestions";
-            rev = "v0.7.1";
-            sha256 = "KLUYpUu4DHRumQZ3w59m9aTW6TBKMCXl2UcKi4uMd7w=";
-          };
-        }
-        {
-          name = "zsh-completions";
-          src = pkgs.fetchFromGitHub {
-            owner = "zsh-users";
-            repo = "zsh-completions";
-            rev = "v0.36.0";
-            sha256 = "0z6i9wjjklb4lvr7zjhbphibsyx51psv50gm07mbb0kj9058j6kc";
-          };
-        }
-        {
-          name = "zsh-z";
-          src = pkgs.fetchFromGitHub {
-            owner = "agkozak";
-            repo = "zsh-z";
-            rev = "acd0e1984df350c189f8f9c4956ec586b6c73fca";
-            sha256 = "0z6i9wjjklb4lvr7zjhbphibsyx51psv50gm07mbb0kj9058j6kc";
-          };
-        }
-        {
-          name = "common";
-          src = pkgs.fetchFromGitHub {
-            owner = "jackharrisonsherlock";
-            repo = "common";
-            rev = "44b6b34d8feef721a6e4a7df272c740e3d2bd8f4";
-            sha256 = "NmAZ/7FhdGzmXgEgWnqHViXH1+ksfsyS4K9i+S5Y8s4=";
-          };
-          file = "common.zsh-theme";
-        }
+      enableCompletion = true;
+      historyControl = [
+        "ignoredups"
+        "erasedups"
       ];
-
-      syntaxHighlighting.enable = true;
-
-      oh-my-zsh = {
-        enable = true;
-        plugins = [
-          "git"
-          "z"
-        ];
-        extraConfig = ''
-          DISABLE_AUTO_TITLE="true"
-          ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#737373"
-        '';
+      historyIgnore = [
+        "pwd"
+        "ls"
+        "cd"
+      ];
+      shellOptions = [
+        "histappend"
+        "checkwinsize"
+        "globstar"
+        "nullglob"
+        "cdspell"
+      ];
+      shellAliases = {
+        ls = "ls --color=auto";
       };
 
-      initContent =
-        let
-          zshConfigEarlyInit = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (
-            lib.mkOrder 500 ''
-              if [[ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then
-                . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-                . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
-              fi
-            ''
-          );
-          zshConfig = lib.mkOrder 1000 ''
-            export PATH=$HOME/.local/share/bin:$PATH
-            export PATH=$HOME/.local/bin:$PATH
-            export PATH=$HOME/.local/scripts:$PATH
+      profileExtra = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin ''
+        if [[ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then
+          . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+          . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
+        fi
+      '';
 
-            export HISTIGNORE="pwd:ls:cd"
+      initExtra = ''
+        export PATH=$HOME/.local/share/bin:$PATH
+        export PATH=$HOME/.local/bin:$PATH
+        export PATH=$HOME/.local/scripts:$PATH
 
-            alias ls='ls --color=auto'
+        export CDPATH=".:$HOME/.local/share/src"
+        export GPG_TTY=$(tty)
 
-            COMMON_COLORS_CURRENT_DIR=yellow
-            COMMON_COLORS_RETURN_STATUS_TRUE=yellow
-            COMMON_COLORS_RETURN_STATUS_FALSE=red
-            COMMON_PROMPT_SYMBOL="|"
+        source ${pkgs.git}/share/git/contrib/completion/git-prompt.sh
+        GIT_PS1_SHOWDIRTYSTATE=1
 
-            ctx() {
-              if [[ (( $+commands[kubectl] )) ]]; then
-                local current_ctx=$(kubectl config current-context 2> /dev/null)
+        __prompt() {
+          local status=$?
+          local reset='\[\e[0m\]'
+          local color_status='\[\e[33m\]'
+          [[ $status -ne 0 ]] && color_status='\[\e[31m\]'
 
-                if [[ -n "$current_ctx" ]]; then
-                  echo -n "%{$fg[cyan]%}$current_ctx ❯%{$reset_color%} "
-                fi
-              fi
-            }
+          PS1="\[\e[35m\]\u@''${HOSTNAME%%.*} ❯$reset "
 
-            host() {
-              echo -n "%{$fg[magenta]%}''${USER}@''${HOST%%.*} ❯%{$reset_color%} "
-            }
+          if command -v kubectl >/dev/null 2>&1; then
+            local ctx
+            ctx=$(kubectl config current-context 2>/dev/null)
+            [[ -n $ctx ]] && PS1+="\[\e[36m\]$ctx ❯$reset "
+          fi
 
-            PROMPT='$(host)$(ctx)$(common_current_dir)$(common_bg_jobs)$(common_return_status)'
-            RPROMPT='$(common_git_status)'
+          PS1+="\[\e[33m\]\W$reset"
+          [[ $(jobs -p | wc -l) -gt 0 ]] && PS1+=" \[\e[34m\]*$reset"
+          PS1+="$(__git_ps1 ' \[\e[32m\](%s)'"$reset")"
+          PS1+=" $color_status|$reset "
+        }
+        PROMPT_COMMAND="__prompt''${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
 
-            GPG_TTY=$(tty)
+        for file in $HOME/.secrets/*.env; do
+          source "$file"
+        done
 
-            setopt extendedglob
-            if [[ -n $HOME/.secrets/*.env(#qN) ]]; then
-              for file in $HOME/.secrets/*.env; do
-                  source "$file"
-              done
-            fi
+        for file in $HOME/.scripts/**/*.sh; do
+          source "$file"
+        done
 
-            if [[ -n $HOME/.scripts/**/*.zsh(#qN) ]]; then
-              for file in $HOME/.scripts/**/*.zsh; do
-                  source "$file"
-              done
+        for script_dir in $HOME/.scripts/**/; do
+          PATH="$script_dir:$PATH"
+        done
+      '';
+    };
 
-              script_dirs=($HOME/.scripts/**/)
-              for script_dir in $script_dirs; do
-                PATH="$script_dir:$PATH"
-              done
-            fi
-
-            unsetopt extendedglob
-          '';
-        in
-        lib.mkMerge [
-          zshConfigEarlyInit
-          zshConfig
-        ];
+    zoxide = {
+      enable = true;
     };
 
     fzf = {

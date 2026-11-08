@@ -34,7 +34,7 @@ with lib;
           prefix = "C-a";
           escapeTime = 10;
           historyLimit = 10000;
-          shell = "${pkgs.zsh}/bin/zsh";
+          shell = "${pkgs.bashInteractive}/bin/bash";
           extraConfig = ''
             set-option -a terminal-features 'xterm-256color:RGB'
 
@@ -63,7 +63,7 @@ with lib;
             bind -r N display-popup -E "~/.scripts/utils/tmux-navigator.sh"
             bind r source-file ~/.config/tmux/tmux.conf \; display-message "Tmux config is reloaded"
 
-            set-option -g default-command ${pkgs.zsh}/bin/zsh
+            set-option -g default-command ${pkgs.bashInteractive}/bin/bash
           '';
         };
       };

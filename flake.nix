@@ -99,8 +99,8 @@
               msg = "tmux should be enabled without consumer-supplied inputs";
             }
             {
-              ok = cfg.programs.zsh.enable;
-              msg = "shell module should enable zsh";
+              ok = cfg.programs.bash.enable;
+              msg = "shell module should enable bash";
             }
             {
               ok = cfg.home.username == "sample";

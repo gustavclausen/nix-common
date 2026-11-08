@@ -172,9 +172,9 @@ with lib;
         };
       };
 
-      zsh.initContent = ''
+      bash.initExtra = ''
         if command -v "switcher" >/dev/null 2>&1; then
-          source <(switcher init zsh)
+          source <(switcher init bash)
         fi
 
         export PATH="$HOME/.krew/bin:$PATH"

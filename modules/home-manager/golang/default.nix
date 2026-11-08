@@ -22,7 +22,7 @@ with lib;
       air
     ];
 
-    programs.zsh.initContent = ''
+    programs.bash.initExtra = ''
       export GOPATH="$HOME/go"
       export GOBIN="$GOPATH/bin"
       export PATH="$GOPATH:$HOME/go/bin:$PATH"

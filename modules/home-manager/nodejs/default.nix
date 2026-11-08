@@ -19,7 +19,7 @@ with lib;
       corepack_24
     ];
 
-    programs.zsh.initContent = ''
+    programs.bash.initExtra = ''
       export PATH="$(npm get prefix)/bin:$PATH"
     '';
   };

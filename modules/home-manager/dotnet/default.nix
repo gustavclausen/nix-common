@@ -18,7 +18,7 @@ with lib;
       dotnet-sdk_10
     ];
 
-    programs.zsh.initContent = ''
+    programs.bash.initExtra = ''
       export DOTNET_ROOT="${pkgs.dotnet-sdk_10}"
     '';
   };
