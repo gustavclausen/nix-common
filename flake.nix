@@ -3,7 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -18,7 +17,6 @@
     {
       self,
       nixpkgs,
-      nixpkgs-unstable,
       home-manager,
       minimal-tmux,
       ...
@@ -31,8 +29,7 @@
       ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems f;
 
-      overlay = import ./overlays/unstable-packages.nix { inherit nixpkgs-unstable; };
-      mkPkgs = import ./lib/mkPkgs.nix { inherit nixpkgs overlay; };
+      mkPkgs = import ./lib/mkPkgs.nix { inherit nixpkgs; };
 
       # Feature modules own their flake inputs; consumers pass nothing extra.
       hmModules = {
@@ -53,7 +50,7 @@
       mkSample =
         system:
         home-manager.lib.homeManagerConfiguration {
-          pkgs = mkPkgs system;
+          pkgs = mkPkgs { inherit system; };
           modules = [
             hmModules.default
             (
@@ -82,7 +79,6 @@
     in
     {
       homeModules = hmModules;
-      overlays.default = overlay;
       lib.mkPkgs = mkPkgs;
 
       homeConfigurations = nixpkgs.lib.genAttrs (map (s: "sample-${s}") systems) (
@@ -93,11 +89,11 @@
         system:
         let
           cfg = (mkSample system).config;
-          pkgs = mkPkgs system;
+          pkgs = mkPkgs { inherit system; };
           assertions = [
             {
               ok = pkgs.claude-code.meta.unfree or false;
-              msg = "helper should expose unstable overlay package claude-code with unfree allowed";
+              msg = "helper should allow unfree packages (claude-code)";
             }
             {
               ok = cfg.programs.tmux.enable;

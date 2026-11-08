@@ -1,8 +1,11 @@
-# Package set with the unstable-packages overlay applied and unfree allowed.
-{ nixpkgs, overlay }:
-system:
+# Package set with unfree allowed. Consumers supply their own overlays
+# (e.g. which packages come from unstable) — nix-common doesn't manage them.
+{ nixpkgs }:
+{
+  system,
+  overlays ? [ ],
+}:
 import nixpkgs {
-  inherit system;
-  overlays = [ overlay ];
+  inherit system overlays;
   config.allowUnfree = true;
 }
