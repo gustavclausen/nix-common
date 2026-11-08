@@ -116,6 +116,7 @@
 
     zoxide = {
       enable = true;
+      enableBashIntegration = true;
     };
 
     fzf = {
