@@ -27,6 +27,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
       - name: Flake check
-        run: nix flake check --all-systems
+        run: nix flake check
       - name: Evaluate sample standalone Home Manager configuration
         run: nix eval --raw ".#homeConfigurations.sample-${{ matrix.system }}.activationPackage.drvPath"
